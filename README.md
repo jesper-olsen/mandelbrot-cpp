@@ -15,7 +15,7 @@ Single Thread/Multi-thread shows the number of seconds it takes to do a 5000x500
 | :--------   | :------------------------------------------------------------------- | ---------------:| -----------: | ----:| ------------------: |
 | Awk         | [mandelbrot-awk](https://github.com/jesper-olsen/mandelbrot-awk)     |           417.9 |              |      |                     |
 |   C         | [mandelbrot-c](https://github.com/jesper-olsen/mandelbrot-c)         |             3.6 |          0.6 |  0.7 |               0.2   |
-| **C++**     | [mandelbrot-cpp](https://github.com/jesper-olsen/mandelbrot-cpp)     |             3.7 |              |      |               0.2   |
+| **C++**     | [mandelbrot-cpp](https://github.com/jesper-olsen/mandelbrot-cpp)     |             3.7 |          0.6 |      |               0.2   |
 | Erlang      | [mandelbrot_erl](https://github.com/jesper-olsen/mandelbrot_erl)     |            35.6 |          8.3 |      |                     |
 | Fortran     | [mandelbrot-f](https://github.com/jesper-olsen/mandelbrot-f)         |             4.5 |              |      |                     |
 | Go          | [mandelbrot-go](https://github.com/jesper-olsen/mandelbrot-go)       |             4.1 |          0.8 |  1.3 |               0.4   |
@@ -121,11 +121,11 @@ time ./mandelbrot png=1 width=5000 height=5000 > image.dat
 3.59s user 0.04s system 99% cpu 3.652 total
 ```
 
-#**Generating a 5000x5000 data file multiple worker threads**
-#```sh
-#time ./mandelbrot_pthread  png=1 width=5000 height=5000 > image.dat
-#5.11s user 0.06s system 884% cpu 0.584 total
-#```
+**Generating a 5000x5000 data file multiple worker threads**
+```sh
+time ./mandelbrot_thread  png=1 width=5000 height=5000 > image.dat
+ 5.17s user 0.06s system 840% cpu 0.622 total
+```
 #
 #**Generating a 5000x5000 data file with SIMD and multiple worker threads:**
 #```sh
