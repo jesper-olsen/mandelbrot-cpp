@@ -1,20 +1,41 @@
-# Mandelbrot in C++
+# Mandelbrot in C
 
-This repository contains a modern C++ (C++23) implementation for generating visualizations of the Mandelbrot set. It is a direct port of the [mandelbrot-c](https://github.com/jesper-olsen/mandelbrot-c) reference implementation, part of a [cross-language comparison project](https://github.com/jesper-olsen/mandelbrot-c#other-language-implementations).
+This repository contains a modern C (C++23) implementation for generating visualizations of the Mandelbrot set. 
 
 The program compiles to a single native executable. It can render the Mandelbrot set directly to the terminal as ASCII art or produce a data file for `gnuplot` to generate a high-resolution PNG image.
 
-## Differences from the C reference
+### Other Language Implementations
 
-The escape-time algorithm and ASCII/gnuplot output formats are unchanged and verified byte-identical to `mandelbrot.c` across ASCII, gnuplot-text, and 5000x5000 renders. The differences are in the surrounding scaffolding:
+This project is part of a suite of mandelbrot implementations in different languages.
 
-- **Argument parsing** (`parse_arg`) uses `std::string_view` and `std::from_chars` instead of `strchr`/`strcmp`/`atoi`/`atof`. `argv` is never mutated (the C version temporarily writes a `'\0'` into the argument string and restores it afterwards).
-- **Row serialization** (`gptext_output`) uses `std::to_chars` instead of a hand-rolled 3-digit itoa. This incidentally fixes a real bug: the C version's itoa assumes `iter` never exceeds 3 digits, so `max_iter >= 1000` silently renders garbage characters (e.g. `1491` comes out as `>91`). Confirmed via direct comparison; `std::to_chars` has no such limit.
-- **Invalid numeric input behaves differently**: `atoi`/`atof` return `0` on unparseable input, silently zeroing the field (e.g. `width=abc` collapses `width` to `0`, producing degenerate output). `std::from_chars` leaves the target variable untouched on failure, so a bad value falls back to whatever the field held before (its default, if unset elsewhere) rather than zero. Worth knowing if any script relies on the C behavior.
-- `Config` uses default member initializers instead of a C99 designated-initializer literal in `main`.
-- Pointer parameters (`const Config *`) became reference parameters (`const Config&`).
+Single Thread/Multi-thread shows the number of seconds it takes to do a 5000x5000 calculation.
 
-Hot-loop I/O (`putchar`, `fwrite`) is unchanged — `std::cout`/`std::print` don't fit a per-pixel loop and would only add overhead here.
+
+| Language    | Repository                                                           | Single Thread   | Multi-Thread | Simd | Multi-Thread + Simd |
+| :--------   | :------------------------------------------------------------------- | ---------------:| -----------: | ----:| ------------------: |
+| Awk         | [mandelbrot-awk](https://github.com/jesper-olsen/mandelbrot-awk)     |           417.9 |              |      |                     |
+| **C**       | [mandelbrot-c](https://github.com/jesper-olsen/mandelbrot-c)         |             3.6 |          0.6 |  0.7 |               0.2   |
+| Erlang      | [mandelbrot_erl](https://github.com/jesper-olsen/mandelbrot_erl)     |            35.6 |          8.3 |      |                     |
+| Fortran     | [mandelbrot-f](https://github.com/jesper-olsen/mandelbrot-f)         |             4.5 |              |      |                     |
+| Go          | [mandelbrot-go](https://github.com/jesper-olsen/mandelbrot-go)       |             4.1 |          0.8 |  1.3 |               0.4   |
+| Java        | [mandelbrot-java](https://github.com/jesper-olsen/mandelbrot-java)   |             3.9 |          0.8 |  1.4 |               0.5   |
+| Lua         | [mandelbrot-lua](https://github.com/jesper-olsen/mandelbrot-lua)     |            33.2 |              |      |                     |
+| Mojo        | [mandelbrot-mojo](https://github.com/jesper-olsen/mandelbrot-mojo)   |             3.8 |          1.2 |  0.7 |               0.4   |
+| Nushell     | [mandelbrot-nu](https://github.com/jesper-olsen/mandelbrot-nu)       |         17186.6 |              |      |                     |
+| Odin        | [mandelbrot-odin](https://github.com/jesper-olsen/mandelbrot-odin)   |             4.4 |              |      |                     |
+| Python      | [mandelbrot-py](https://github.com/jesper-olsen/mandelbrot-py)       |     (pure) 93.3 | (jax)    5.9 |      |                     |
+| R           | [mandelbrot-R](https://github.com/jesper-olsen/mandelbrot-R)         |           335.0 |              |      |                     |
+| Rust        | [mandelbrot-rs](https://github.com/jesper-olsen/mandelbrot-rs)       |             4.7 |          1.3 |  1.4 |               0.8   |
+| Swift       | [mandelbrot-swift](https://github.com/jesper-olsen/mandelbrot-swift) |             4.5 |          1.2 |  1.3 |               0.7   |
+| Tcl         | [mandelbrot-tcl](https://github.com/jesper-olsen/mandelbrot-tcl)     |           306.9 |              |      |                     |
+| Zig         | [mandelbrot-zig](https://github.com/jesper-olsen/mandelbrot-zig)     |             4.9 |          0.9 |  0.7 |               0.3   |
+
+
+
+
+
+
+---
 
 ## Prerequisites
 
@@ -40,6 +61,8 @@ clang++ -std=c++23 -O3 -o mandelbrot mandelbrot.cpp
 make
 ```
 
+---
+
 ## Usage
 
 The compiled executable can be configured via command-line arguments using a `key=value` format.
@@ -48,13 +71,12 @@ The compiled executable can be configured via command-line arguments using a `ke
 
 To render the Mandelbrot set directly in your terminal, run the executable.
 
-```
+```sh
 ./mandelbrot
 ```
 
 You can change the view and resolution by passing parameters:
-
-```
+```sh
 # Zoom in on a different area with a wider view
 ./mandelbrot width=120 ll_x=-0.75 ll_y=0.1 ur_x=-0.74 ur_y=0.11
 ```
@@ -64,16 +86,25 @@ You can change the view and resolution by passing parameters:
 To create a high-resolution PNG, you first generate a data file and then process it with `gnuplot`.
 
 **Step 1: Generate the data file**
+Set `png=1` and specify the desired dimensions. Redirect the output to a file.
 
-```
+```sh
 ./mandelbrot png=1 width=1000 height=750 > image.dat
 ```
 
-**Step 2: Run gnuplot** (reuse `topng.gp` from [mandelbrot-c](https://github.com/jesper-olsen/mandelbrot-c) unchanged — the data format is identical)
+**Step 3: Run gnuplot**
+This will read `image.dat` and create `mandelbrot.png`.
 
-```
+```sh
 gnuplot topng.gp
 ```
+The result is a high-quality `mandelbrot.png` image.
+
+![PNG Image of the Mandelbrot Set](mandelbrot.png)
+
+## Performance
+
+Benchmarks were run on an **Apple M5** system with Apple clang version 21.0.0 
 
 ## Performance
 
@@ -105,6 +136,3 @@ time ./mandelbrot png=1 width=5000 height=5000 > image.dat
 #time ./mandelbrot_simd_pthread_v8 png=1 width=20000 height=20000 > image.dat
 #13.51s user 0.47s system 679% cpu 2.057 total
 #```
-
-
-
