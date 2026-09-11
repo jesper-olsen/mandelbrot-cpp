@@ -1,4 +1,4 @@
-# Mandelbrot in C
+# Mandelbrot in C++
 
 This repository contains a modern C (C++23) implementation for generating visualizations of the Mandelbrot set. 
 
